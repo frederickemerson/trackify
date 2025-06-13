@@ -90,7 +90,7 @@ export default function PaperTracker() {
     open: false,
     paper: null,
   })
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const fetchPapers = async () => {
     setIsLoading(true)
@@ -235,14 +235,17 @@ export default function PaperTracker() {
   const moveToFuture = async (paperId: string) => {
     setIsLoading(true)
     try {
+        const formData = new FormData();
+    formData.append("status", "future");
+
       const response = await fetch(`/api/papers/${paperId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${JWT_TOKEN}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "future" as const }),
-      })
+        body: formData,
+    })
+
       if (response.ok) {
         await fetchPapers() // Refresh papers after status change
       }
@@ -256,13 +259,14 @@ export default function PaperTracker() {
   const moveToCurrentReview = async (paperId: string) => {
     setIsLoading(true)
     try {
+        const formData = new FormData()
+        formData.append("status","current")
       const response = await fetch(`/api/papers/${paperId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${JWT_TOKEN}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "current" as const }),
+        body: formData,
       })
       if (response.ok) {
         await fetchPapers() // Refresh papers after status change
@@ -327,7 +331,7 @@ export default function PaperTracker() {
 
   return (
     <div className="min-h-screen min-w-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 relative">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -404,46 +408,343 @@ export default function PaperTracker() {
           </Dialog>
         </motion.div>
 
-        <Tabs defaultValue="current" className="space-y-6">
+        {isLoading ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            exit={{ opacity: 0 }}
+            className="flex items-center justify-center py-12"
           >
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
-              <TabsTrigger value="current"  className="flex items-center gap-2 text-xs sm:text-sm">
-                <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Current</span> ({currentPapers.length})
-              </TabsTrigger>
-              <TabsTrigger value="future" className="flex items-center gap-2 text-xs sm:text-sm">
-                <Archive className="w-4 h-4" />
-                <span className="hidden sm:inline">Future</span> ({futurePapers.length})
-              </TabsTrigger>
-              <TabsTrigger value="missed" className="flex items-center gap-2 text-xs sm:text-sm">
-                <Clock className="w-4 h-4" />
-                <span className="hidden sm:inline">Missed</span> ({missedPapers.length})
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="flex items-center gap-2 text-xs sm:text-sm">
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Completed</span> ({completedPapers.length})
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-gray-600 text-lg font-medium">Loading papers...</p>
+            </div>
           </motion.div>
+        ) : (
+          <Tabs defaultValue="current" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+                <TabsTrigger value="current" className="flex items-center gap-2 text-xs sm:text-sm">
+                  <BookOpen className="w-4 h-4" />
+                  <span className="hidden sm:inline">Current</span> ({currentPapers.length})
+                </TabsTrigger>
+                <TabsTrigger value="future" className="flex items-center gap-2 text-xs sm:text-sm">
+                  <Archive className="w-4 h-4" />
+                  <span className="hidden sm:inline">Future</span> ({futurePapers.length})
+                </TabsTrigger>
+                <TabsTrigger value="missed" className="flex items-center gap-2 text-xs sm:text-sm">
+                  <Clock className="w-4 h-4" />
+                  <span className="hidden sm:inline">Missed</span> ({missedPapers.length})
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="flex items-center gap-2 text-xs sm:text-sm">
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden sm:inline">Completed</span> ({completedPapers.length})
+                </TabsTrigger>
+              </TabsList>
+            </motion.div>
 
-          <TabsContent value="current" className="space-y-4">
-            {currentPapers.length === 0 ? (
-              <Card className="border-dashed">
-                <CardContent className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <BookOpen className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">No papers currently under review</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
+            <TabsContent value="current" className="space-y-4">
+              {currentPapers.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <BookOpen className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">No papers currently under review</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  <AnimatePresence>
+                    {currentPapers.map((paper, index) => (
+                      <motion.div
+                        key={paper.id}
+                        variants={cardVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card
+                          className={`${getCardColor(index)} border-2 hover:shadow-lg transition-all duration-200`}
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <CardTitle className="text-lg font-bold text-gray-900 leading-tight line-clamp-2">
+                                  {paper.name}
+                                </CardTitle>
+                                <CardDescription className="text-sm text-gray-600">
+                                  Review deadline approaching
+                                </CardDescription>
+                              </div>
+                              {isOverdue(paper.deadline) && (
+                                <Badge variant="destructive" className="ml-2 shrink-0">
+                                  Overdue
+                                </Badge>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="secondary" className="text-xs bg-white/60">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {formatDate(paper.deadline)}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs bg-white/60">
+                                PDF Available
+                              </Badge>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                              >
+                                <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  View PDF
+                                </a>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => moveToFuture(paper.id)}
+                                className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                                disabled={isLoading}
+                              >
+                                <Archive className="w-4 h-4 mr-2" />
+                                Store Later
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteDialog({ open: true, paper })}
+                                className="justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
+                                disabled={isLoading}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove
+                              </Button>
+                            </div>
+
+                            <Button
+                              onClick={() => setSummaryDialog({ open: true, paper })}
+                              className="w-full justify-between bg-gray-900 hover:bg-gray-800 text-white transition-transform hover:scale-105"
+                              disabled={isLoading}
+                            >
+                              Complete Review
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="future" className="space-y-4">
+              {futurePapers.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Archive className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">No papers stored for future review</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  <AnimatePresence>
+                    {futurePapers.map((paper, index) => (
+                      <motion.div
+                        key={paper.id}
+                        variants={cardVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card
+                          className={`${getCardColor(index)} border-2 hover:shadow-lg transition-all duration-200`}
+                        >
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg font-bold text-gray-900 leading-tight line-clamp-2">
+                              {paper.name}
+                            </CardTitle>
+                            <CardDescription className="text-sm text-gray-600">Stored for future review</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="secondary" className="text-xs bg-white/60">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {formatDate(paper.deadline)}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs bg-white/60">
+                                Future Review
+                              </Badge>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row gap-2 justify-start">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="w-[40%] justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                              >
+                                <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  View PDF
+                                </a>
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteDialog({ open: true, paper })}
+                                className="w-[40%] justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
+                                disabled={isLoading}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Remove
+                              </Button>
+                            </div>
+
+                            <Button
+                              onClick={() => moveToCurrentReview(paper.id)}
+                              className="w-full justify-between bg-gray-900 hover:bg-gray-800 text-white transition-transform hover:scale-105"
+                              disabled={isLoading}
+                            >
+                              Move to Current
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="missed" className="space-y-4">
+              {missedPapers.length === 0 ? (
+                <Card className="border-dashed">
+                  <CardContent className="flex items-center justify-center py-12">
+                    <div className="text-center">
+                      <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">No missed reviews</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                  <AnimatePresence>
+                    {missedPapers.map((paper, index) => (
+                      <motion.div
+                        key={paper.id}
+                        variants={cardVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="exit"
+                        transition={{ delay: index * 0.1 }}
+                      >
+                        <Card
+                          className="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 hover:shadow-lg transition-all duration-200"
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2 flex-1">
+                                <CardTitle className="text-lg font-bold text-red-900 leading-tight line-clamp-2">
+                                  {paper.name}
+                                </CardTitle>
+                                <CardDescription className="text-sm text-red-700">Review deadline missed</CardDescription>
+                              </div>
+                              <Badge variant="destructive" className="ml-2 shrink-0">
+                                Missed
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="secondary" className="text-xs bg-white/60 text-red-800">
+                                <Clock className="w-3 h-3 mr-1" />
+                                Was: {formatDate(paper.deadline)}
+                              </Badge>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                asChild
+                                className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                              >
+                                <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  View PDF
+                                </a>
+                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveToFuture(paper.id)}
+                                  className="flex-1 bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                                  disabled={isLoading}
+                                >
+                                  Store Later
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => moveBackToCurrent(paper.id)}
+                                  className="flex-1 bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                                  disabled={isLoading}
+                                >
+                                  Resume
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteDialog({ open: true, paper })}
+                                  className="flex-1 bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
+                                  disabled={isLoading}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Remove
+                                </Button>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => setSummaryDialog({ open: true, paper })}
+                              className="w-full justify-between bg-red-700 hover:bg-red-800 text-white transition-transform hover:scale-105"
+                              disabled={isLoading}
+                            >
+                              Complete Review
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="completed" className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 <AnimatePresence>
-                  {currentPapers.map((paper, index) => (
+                  {completedPapers.map((paper, index) => (
                     <motion.div
                       key={paper.id}
                       variants={cardVariants}
@@ -453,214 +754,32 @@ export default function PaperTracker() {
                       transition={{ delay: index * 0.1 }}
                     >
                       <Card
-                        className={`${getCardColor(index)} border-2 hover:shadow-lg transition-all duration-200`}
+                        className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 hover:shadow-lg transition-all duration-200"
                       >
                         <CardHeader className="pb-3">
                           <div className="flex items-start justify-between">
                             <div className="space-y-2 flex-1">
-                              <CardTitle className="text-lg font-bold text-gray-900 leading-tight line-clamp-2">
+                              <CardTitle className="text-lg font-bold text-green-900 leading-tight line-clamp-2">
                                 {paper.name}
                               </CardTitle>
-                              <CardDescription className="text-sm text-gray-600">
-                                Review deadline approaching
+                              <CardDescription className="text-sm text-green-700">
+                                Review completed successfully
                               </CardDescription>
                             </div>
-                            {isOverdue(paper.deadline) && (
-                              <Badge variant="destructive" className="ml-2 shrink-0">
-                                Overdue
+                            <Badge className="ml-2 shrink-0 bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant="secondary" className="text-xs bg-white/60 text-green-800">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {formatDate(paper.deadline)}
+                            </Badge>
+                            {paper.review_file_url && (
+                              <Badge variant="secondary" className="text-xs bg-white/60 text-green-800">
+                                {getFileIcon(paper.review_file_type)} Review File
                               </Badge>
                             )}
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary" className="text-xs bg-white/60">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {formatDate(paper.deadline)}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs bg-white/60">
-                              PDF Available
-                            </Badge>
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                              className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                            >
-                              <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                View PDF
-                              </a>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => moveToFuture(paper.id)}
-                              className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                              disabled={isLoading}
-                            >
-                              <Archive className="w-4 h-4 mr-2" />
-                              Store Later
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteDialog({ open: true, paper })}
-                              className="justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
-                              disabled={isLoading}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove
-                            </Button>
-                          </div>
-
-                          <Button
-                            onClick={() => setSummaryDialog({ open: true, paper })}
-                            className="w-full justify-between bg-gray-900 hover:bg-gray-800 text-white transition-transform hover:scale-105"
-                            disabled={isLoading}
-                          >
-                            Complete Review
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="future" className="space-y-4">
-            {futurePapers.length === 0 ? (
-              <Card className="border-dashed">
-                <CardContent className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <Archive className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">No papers stored for future review</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                <AnimatePresence>
-                  {futurePapers.map((paper, index) => (
-                    <motion.div
-                      key={paper.id}
-                      variants={cardVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card
-                        className={`${getCardColor(index)} border-2 hover:shadow-lg transition-all duration-200`}
-                      >
-                        <CardHeader className="pb-3">
-                          <CardTitle className="text-lg font-bold text-gray-900 leading-tight line-clamp-2">
-                            {paper.name}
-                          </CardTitle>
-                          <CardDescription className="text-sm text-gray-600">Stored for future review</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary" className="text-xs bg-white/60">
-                              <Clock className="w-3 h-3 mr-1" />
-                              {formatDate(paper.deadline)}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs bg-white/60">
-                              Future Review
-                            </Badge>
-                          </div>
-
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                              className="w-full justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                            >
-                              <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
-                                <ExternalLink className="w-4 h-4 mr-2" />
-                                View PDF
-                              </a>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setDeleteDialog({ open: true, paper })}
-                              className="justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
-                              disabled={isLoading}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Remove
-                            </Button>
-                          </div>
-
-                          <Button
-                            onClick={() => moveToCurrentReview(paper.id)}
-                            className="w-full justify-between bg-gray-900 hover:bg-gray-800 text-white transition-transform hover:scale-105"
-                            disabled={isLoading}
-                          >
-                            Move to Current
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="missed" className="space-y-4">
-            {missedPapers.length === 0 ? (
-              <Card className="border-dashed">
-                <CardContent className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">No missed reviews</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                <AnimatePresence>
-                  {missedPapers.map((paper, index) => (
-                    <motion.div
-                      key={paper.id}
-                      variants={cardVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="exit"
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card
-                        className="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 hover:shadow-lg transition-all duration-200"
-                      >
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-2 flex-1">
-                              <CardTitle className="text-lg font-bold text-red-900 leading-tight line-clamp-2">
-                                {paper.name}
-                              </CardTitle>
-                              <CardDescription className="text-sm text-red-700">Review deadline missed</CardDescription>
-                            </div>
-                            <Badge variant="destructive" className="ml-2 shrink-0">
-                              Missed
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary" className="text-xs bg-white/60 text-red-800">
-                              <Clock className="w-3 h-3 mr-1" />
-                              Was: {formatDate(paper.deadline)}
-                            </Badge>
                           </div>
 
                           <div className="flex flex-col gap-2">
@@ -672,154 +791,53 @@ export default function PaperTracker() {
                             >
                               <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
                                 <ExternalLink className="w-4 h-4 mr-2" />
-                                View PDF
+                                Original PDF
                               </a>
                             </Button>
-                            <div className="flex gap-2">
+                            {paper.review_file_url && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => moveToFuture(paper.id)}
-                                className="flex-1 bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                                disabled={isLoading}
+                                asChild
+                                className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
                               >
-                                Store Later
+                                <a href={paper.review_file_url} target="_blank" rel="noopener noreferrer">
+                                  {getFileIcon(paper.review_file_type)} Review File
+                                </a>
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => moveBackToCurrent(paper.id)}
-                                className="flex-1 bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                                disabled={isLoading}
-                              >
-                                Resume
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteDialog({ open: true, paper })}
-                                className="flex-1 bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
-                                disabled={isLoading}
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Remove
-                              </Button>
-                            </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setDeleteDialog({ open: true, paper })}
+                              className="justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
+                              disabled={isLoading}
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Remove
+                            </Button>
                           </div>
 
-                          <Button
-                            onClick={() => setSummaryDialog({ open: true, paper })}
-                            className="w-full justify-between bg-red-700 hover:bg-red-800 text-white transition-transform hover:scale-105"
-                            disabled={isLoading}
-                          >
-                            Complete Review
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
+                          {paper.summary && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              transition={{ duration: 0.3 }}
+                              className="bg-white/60 p-3 rounded-lg"
+                            >
+                              <Label className="text-xs font-medium text-green-900 uppercase tracking-wide">Summary</Label>
+                              <p className="text-sm text-green-800 mt-1 line-clamp-3">{paper.summary}</p>
+                            </motion.div>
+                          )}
                         </CardContent>
                       </Card>
                     </motion.div>
                   ))}
                 </AnimatePresence>
               </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="completed" className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              <AnimatePresence>
-                {completedPapers.map((paper, index) => (
-                  <motion.div
-                    key={paper.id}
-                    variants={cardVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card
-                      className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-200 hover:shadow-lg transition-all duration-200"
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-2 flex-1">
-                            <CardTitle className="text-lg font-bold text-green-900 leading-tight line-clamp-2">
-                              {paper.name}
-                            </CardTitle>
-                            <CardDescription className="text-sm text-green-700">
-                              Review completed successfully
-                            </CardDescription>
-                          </div>
-                          <Badge className="ml-2 shrink-0 bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary" className="text-xs bg-white/60 text-green-800">
-                            <Clock className="w-3 h-3 mr-1" />
-                            {formatDate(paper.deadline)}
-                          </Badge>
-                          {paper.review_file_url && (
-                            <Badge variant="secondary" className="text-xs bg-white/60 text-green-800">
-                              {getFileIcon(paper.review_file_type)} Review File
-                            </Badge>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            asChild
-                            className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                          >
-                            <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              Original PDF
-                            </a>
-                          </Button>
-                          {paper.review_file_url && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                              className="justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
-                            >
-                              <a href={paper.review_file_url} target="_blank" rel="noopener noreferrer">
-                                {getFileIcon(paper.review_file_type)} Review File
-                              </a>
-                            </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteDialog({ open: true, paper })}
-                            className="justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
-                            disabled={isLoading}
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Remove
-                          </Button>
-                        </div>
-
-                        {paper.summary && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            transition={{ duration: 0.3 }}
-                            className="bg-white/60 p-3 rounded-lg"
-                          >
-                            <Label className="text-xs font-medium text-green-900 uppercase tracking-wide">Summary</Label>
-                            <p className="text-sm text-green-800 mt-1 line-clamp-3">{paper.summary}</p>
-                          </motion.div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+          </Tabs>
+        )}
 
         <Dialog
           open={summaryDialog.open}
