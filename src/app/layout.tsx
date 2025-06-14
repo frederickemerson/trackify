@@ -6,7 +6,7 @@ import { Geist } from "next/font/google";
 export const metadata: Metadata = {
   title: "Research Paper Tracker",
   description: "Helps track research paper",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/track-white.png" }],
 };
 
 const geist = Geist({
