@@ -356,7 +356,7 @@ export default function PaperTracker() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="paper-name">Paper Name</Label>
+                  <Label className="my-2" htmlFor="paper-name">Paper Name</Label>
                   <Input
                     id="paper-name"
                     placeholder="Enter paper title"
@@ -366,7 +366,7 @@ export default function PaperTracker() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="pdf-link">PDF Link</Label>
+                  <Label className="my-2" htmlFor="pdf-link">PDF Link</Label>
                   <Input
                     id="pdf-link"
                     placeholder="https://example.com/paper.pdf"
@@ -376,7 +376,7 @@ export default function PaperTracker() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="deadline">Review Deadline</Label>
+                  <Label className="my-2" htmlFor="deadline">Review Deadline</Label>
                   <Input
                     id="deadline"
                     type="date"
@@ -488,19 +488,20 @@ export default function PaperTracker() {
                                 </Badge>
                               )}
                             </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge variant="secondary" className="text-xs bg-white/60">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {formatDate(paper.deadline)}
+                                </Badge>
+                                <Badge variant="secondary" className="text-xs bg-white/60">
+                                  PDF Available
+                                </Badge>
+                            </div>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                            <div className="flex flex-wrap gap-2">
-                              <Badge variant="secondary" className="text-xs bg-white/60">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {formatDate(paper.deadline)}
-                              </Badge>
-                              <Badge variant="secondary" className="text-xs bg-white/60">
-                                PDF Available
-                              </Badge>
-                            </div>
 
-                            <div className="flex flex-col sm:flex-row gap-2">
+
+                            <div className="flex flex-col justify-center w-full sm:flex-row gap-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -593,23 +594,24 @@ export default function PaperTracker() {
                               </Badge>
                             </div>
 
-                            <div className="flex flex-col sm:flex-row gap-2 justify-start">
+                            <div className="flex flex-row justify-center w-full sm:flex-row gap-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 asChild
-                                className="w-[40%] justify-start bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
+                                className="justify-start w-[50%] bg-white/60 hover:bg-white/80 text-gray-700 transition-transform hover:scale-105"
                               >
                                 <a href={paper.pdf_link} target="_blank" rel="noopener noreferrer">
                                   <ExternalLink className="w-4 h-4 mr-2" />
                                   View PDF
                                 </a>
                               </Button>
+
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setDeleteDialog({ open: true, paper })}
-                                className="w-[40%] justify-start bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
+                                className="justify-start w-[50%] bg-white/60 hover:bg-white/80 text-red-700 transition-transform hover:scale-105"
                                 disabled={isLoading}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
